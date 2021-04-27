@@ -2,6 +2,9 @@
     position: relative;
     height: 100vh;
 }
+html{
+    min-height: 100vh;
+}
 body{
     background-color: var(--gray-dark);
     color: var(--white);
@@ -11,8 +14,8 @@ body{
 
 }
 #footer{
-    position: absolute;
     padding: 1rem 0;
+    position: fixed;
     background-color: #1e1e1e;
     right: 0;
     left: 0;
