@@ -1,13 +1,10 @@
 <template>
   <div>
-    <button v-on:click="modifyData()">Click</button>
     <line-chart v-model="sensorData" v-bind:chartdata="sensorData" v-bind:options="options" :key="componentKey"/>
   </div>
 </template>
 
 <script>
-// import { Line} from 'vue-chartjs';
-// import {Chart} from 'chart.js'
 import LineChart from './Chart.vue'
 
 export default {
@@ -16,47 +13,69 @@ components: { LineChart },
 
   data(){
     return {
-        componentKey: 0,
+      componentKey: 0,
+      max_number_of_readings: 10,
       sensorData: {
-        labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+        labels: [],
         datasets: [{
             label: 'Sensor Reading',
-            data: [12, 19, 53, 25, 32, 43],
-            backgroundColor: [
-                'rgba(255, 99, 132, 0.2)',
-                'rgba(54, 162, 235, 0.2)',
-                'rgba(255, 206, 86, 0.2)',
-                'rgba(75, 192, 192, 0.2)',
-                'rgba(153, 102, 255, 0.2)',
-                'rgba(255, 159, 64, 0.2)'
-            ],
-            borderColor: [
-                'rgba(255, 99, 132, 1)',
-                'rgba(54, 162, 235, 1)',
-                'rgba(255, 206, 86, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(153, 102, 255, 1)',
-                'rgba(255, 159, 64, 1)'
-            ],
-            borderWidth: 1
+            data: [],
+              backgroundColor: "rgba(71, 183,132,.5)",
+              borderColor: "#47b784",
+              borderWidth: 3
         }]
       },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        scales: {
+          yAxes: [
+            {
+              ticks: {
+                beginAtZero: true,
+                padding: 25
+              }
+            }
+          ]
         }
+      }
     }
   },
 
   mounted() {
       console.log('mounted')
+      this.getReadings()
+
+      Echo.private('sensor-reading')
+        .listen('ReadingSent', (e) => {
+            this.sensorData.labels.push(e.reading.created_at)
+            this.sensorData.datasets[0].data.push(e.reading.value)
+
+            // if number of readings exceeds n, filter out older readings
+            this.updateReadingsArray();
+            this.componentKey++;
+        });
   },
-  methods:{
-      modifyData(){
-        console.log(this.sensorData.datasets[0].data[0])
-        this.sensorData.datasets[0].data[0] = 44;
-        this.componentKey += 1;
-      }
-  }
+    methods: {
+        getReadings() {
+            axios.get('/readings').then(response => {
+                response.data.forEach(reading => {
+                    this.sensorData.labels.push(reading.created_at)
+                    this.sensorData.datasets[0].data.push(reading.value)
+                });
+
+                // if number of readings exceeds n, filter out older readings
+                this.updateReadingsArray();
+                this.componentKey++;
+            });
+        },
+        updateReadingsArray(){
+          while(this.sensorData.labels.length > this.max_number_of_readings){
+              this.sensorData.labels.shift();
+              this.sensorData.datasets[0].data.shift();
+            }
+        }
+    }
 }
 </script>
