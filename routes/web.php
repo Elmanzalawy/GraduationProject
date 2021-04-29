@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\ReadingsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,6 +17,10 @@ use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     return view('index');
+});
+
+Route::group(['middleware' => ['json.response', 'cors', 'auth']], function () {
+    Route::apiResource('readings', ReadingsController::class);
 });
 
 Auth::routes();

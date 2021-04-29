@@ -23,6 +23,7 @@ class Kernel extends HttpKernel
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         ForceJsonResponse::class,
+        \App\Http\Middleware\Cors::class,
 
     ];
 
@@ -66,6 +67,8 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'json.response' => ForceJsonResponse::class,
+        'cors' => \App\Http\Middleware\Cors::class,
+
 
     ];
 }
