@@ -1,13 +1,10 @@
 <template>
   <div>
-    <!-- <button v-on:click="modifyData()">Click</button> -->
     <line-chart v-model="sensorData" v-bind:chartdata="sensorData" v-bind:options="options" :key="componentKey"/>
   </div>
 </template>
 
 <script>
-// import { Line} from 'vue-chartjs';
-// import {Chart} from 'chart.js'
 import LineChart from './Chart.vue'
 
 export default {
@@ -16,7 +13,8 @@ components: { LineChart },
 
   data(){
     return {
-        componentKey: 0,
+      componentKey: 0,
+      max_number_of_readings: 10,
       sensorData: {
         labels: [],
         datasets: [{
@@ -27,29 +25,56 @@ components: { LineChart },
               borderWidth: 3
         }]
       },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        scales: {
+          yAxes: [
+            {
+              ticks: {
+                beginAtZero: true,
+                padding: 25
+              }
+            }
+          ]
         }
+      }
     }
   },
 
   mounted() {
       console.log('mounted')
       this.getReadings()
+
+      Echo.private('sensor-reading')
+        .listen('ReadingSent', (e) => {
+            this.sensorData.labels.push(e.reading.created_at)
+            this.sensorData.datasets[0].data.push(e.reading.value)
+
+            // if number of readings exceeds n, filter out older readings
+            this.updateReadingsArray();
+            this.componentKey++;
+        });
   },
     methods: {
         getReadings() {
-            console.log('fetch')
-            axios.get('/api/readings').then(response => {
+            axios.get('/readings').then(response => {
                 response.data.forEach(reading => {
                     this.sensorData.labels.push(reading.created_at)
                     this.sensorData.datasets[0].data.push(reading.value)
                 });
 
+                // if number of readings exceeds n, filter out older readings
+                this.updateReadingsArray();
                 this.componentKey++;
-                console.log(this.sensorData)
             });
+        },
+        updateReadingsArray(){
+          while(this.sensorData.labels.length > this.max_number_of_readings){
+              this.sensorData.labels.shift();
+              this.sensorData.datasets[0].data.shift();
+            }
         }
     }
 }

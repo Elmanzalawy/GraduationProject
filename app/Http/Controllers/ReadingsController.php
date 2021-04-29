@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\SensorReading;
-
+use App\Events\ReadingSent;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 class ReadingsController extends Controller
 {
     /**
@@ -15,7 +17,7 @@ class ReadingsController extends Controller
     public function index()
     {
         $readings = SensorReading::get();
-        return $readings;
+        return response($readings, 200);
     }
 
     /**
@@ -27,11 +29,15 @@ class ReadingsController extends Controller
     public function store(Request $request)
     {
         $reading = new SensorReading;
-        $reading->value = (float) $request->value;
+        $reading->value = $request->value ?? rand(1, 10);
         $reading->type = $request->type;
         $reading->save();
 
-        return $reading;
+        $user = auth()->user();
+
+        broadcast(new ReadingSent($user, $reading))->toOthers();
+
+        return response($reading, 200);
     }
 
     /**
